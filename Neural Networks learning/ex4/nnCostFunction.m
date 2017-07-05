@@ -62,43 +62,76 @@ Theta2_grad = zeros(size(Theta2));
 %               and Theta2_grad from Part 2.
 %
 
+% K is the number of classes.
+K = num_labels;
+Y = eye(K)(y, :);
+
+% Part 1 - Forward Feed and Cost Function
+
+a1 = [ones(m, 1), X];
+
+z2 = a1 * Theta1';
+a2 = sigmoid(z2);
+a2 = [ones(size(a2, 1), 1), a2];
+
+z3 = a2 * Theta2';
+a3 = sigmoid(z3);
+
+% Cost (summation over all training example and all classes)
+cost = sum((-Y .* log(a3)) - ((1 - Y) .* log(1 - a3)), 2);
+J = (1 / m) * sum(cost);
+%J = (1 / m) * sum((-Y .* log(a3)) - ((1 - Y) .* log(1 - a3)));
 
 
+% Part 1.4 - Regularized cost function
+Theta1NoBias = Theta1(:, 2:end);
+Theta2NoBias = Theta2(:, 2:end);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+% Note: Using the sumsq here I found via Google which should
+% be equivalent to sum(term .^ 2);
+reg  = (lambda / (2 * m)) * (sum(sumsq(Theta1NoBias)) + sum(sumsq(Theta2NoBias)));
+J += reg;
 
 % -------------------------------------------------------------
 
-% =========================================================================
-X=[ones(m,1) X];
-ye=eye(num_labels);
-y=ye(y,:);
-a1=X;
-z2=X*Theta1';
-a2=[ones(m,1) sigmoid(z2)];
-z3=a2*Theta2';
-a3=sigmoid(z3);
-l=((y.*log(a3))+((1-y).*log(1-a3)));
-J=-1/m.*sum(sum(l))+lambda/(2*m).*(sum(sum(Theta1(:,2:end).^2))+sum(sum(Theta2(:,2:end).^2)));
+% Part 2 - Backpropagation
 
-tri_theta1=0;
-tri_theta2=0;
-delta3=a3-y;
-delta2=Theta2'*delta3.*sigmoidGradient(z2);
-del
+% Delta(l) values
+Delta1 = 0;
+Delta2 = 0;
+
+for t = 1:m
+	% Step 1 - Input Values
+	a1 = [1; X(t, :)']; % Including Bias
+	z2 = Theta1 * a1;
+	a2 = [1; sigmoid(z2)]; % Including Bias
+
+	z3 = Theta2 * a2;
+	a3 = sigmoid(z3);
+
+	% Step 2 - Delta Output Layer
+	d3 = a3 - Y(t, :)';
+	
+	% Step 3 - Delta Hidden Layer
+	d2 = (Theta2NoBias' * d3) .* sigmoidGradient(z2);
+
+	% Step 4 - Accumulate
+	Delta2 += (d3 * a2');
+	Delta1 += (d2 * a1');
+endfor
+
+% Step 5 - Normal Gradient
+Theta1_grad = (1 / m) * Delta1;
+Theta2_grad = (1 / m) * Delta2;
+
+% -------------------------------------------------------------
+
+% Part 3 - Regularized Gradient
+
+Theta1_grad(:, 2:end) += ((lambda / m) * Theta1NoBias);
+Theta2_grad(:, 2:end) += ((lambda / m) * Theta2NoBias);
+
+% =========================================================================
 
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];

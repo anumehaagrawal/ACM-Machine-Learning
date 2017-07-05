@@ -27,7 +27,7 @@ g = zeros(size(z));
 
 % =============================================================
 
-g=sigmoid(z).*sigmoid(1-z);
+g=sigmoid.*sigmoid(1-z);
 
 
 end
